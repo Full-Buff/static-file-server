@@ -1,0 +1,14 @@
+{
+  "name": "fileserver",
+  "version": "1.0.0",
+  "description": "Static file server with upload functionality",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "ejs": "^3.1.8",
+    "express": "^4.18.2",
+    "express-fileupload": "^1.4.0"
+  }
+}

@@ -1,0 +1,12 @@
+version: '3'
+services:
+  fileserver:
+    build: .
+    ports:
+      - "80:8080"  # Host port 80 mapped to container port 8080
+    environment:
+      - FILES_DIR=/files          # Directory inside the container
+      - UPLOAD_ENABLED=true       # Enable or disable uploads
+      - UPLOAD_DIRS=/tf/maps,/cs             # Directories allowed for uploads
+    volumes:
+      - ./files:/files            # Mount host 'files' directory to container
