@@ -18,3 +18,7 @@ The `validationFunctions` object has the following functions:
 - `validateBspFile`: A function that checks if the uploaded file is a valid TF2 map file.
 
 There are plans to make validation functions extensible, but right now they are hard coded into the `app.js` file.
+
+![image](https://github.com/user-attachments/assets/d338f2e4-63c6-4e3f-969c-fc9622d75eeb)
+
+![image](https://github.com/user-attachments/assets/5d74d668-7e83-4e85-9ee9-58313ed5b272)
