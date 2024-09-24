@@ -9,21 +9,24 @@ on:
 jobs:
 
   build:
-
     runs-on: ubuntu-latest
 
     steps:
       # Step 1: Check out the repository code
       - uses: actions/checkout@v4
 
-      # Step 2: Log in to GitHub Container Registry (GHCR)
-      - name: Log in to GitHub Container Registry
-        run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      # Step 2: Log in to Docker Hub
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
       # Step 3: Build the Docker image
       - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag ghcr.io/full-buff/static-file-server:latest
+        run: |
+          IMAGE_NAME="${{ secrets.DOCKER_USERNAME }}/static-file-server:latest"
+          docker build . --file Dockerfile --tag $IMAGE_NAME
 
-      # Step 4: Push the Docker image to GitHub Container Registry
-      - name: Push Docker image to GHCR
-        run: docker push ghcr.io/full-buff/static-file-server:latest
+      # Step 4: Push the Docker image to Docker Hub
+      - name: Push Docker image to Docker Hub
+        run: |
+          IMAGE_NAME="${{ secrets.DOCKER_USERNAME }}/static-file-server:latest"
+          docker push $IMAGE_NAME
