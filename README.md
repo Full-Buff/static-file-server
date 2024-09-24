@@ -2,6 +2,8 @@
 
 A simple static file server written in Node.js.
 
+https://hub.docker.com/r/fuk0/static-file-server
+
 This server can be configured to limit the rate of uploads, allow/disallow uploads, and set the maximum file size for uploads. The configuration is stored in a JSON file, which must be named `config.json` and placed in the root of the project directory.
 
 The supported values in the `config.json` file are:
