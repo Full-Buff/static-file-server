@@ -21,6 +21,36 @@ The `validationFunctions` object has the following functions:
 
 There are plans to make validation functions extensible, but right now they are hard coded into the `app.js` file.
 
+Example `config.json`
+```
+{
+  "filesDir": "/files",
+  "uploadEnabled": true,
+  "uploadRules": {
+    "/tf/maps": {
+      "allowedExtensions": [".bsp"],
+      "maxFileSize": "125MB",
+      "validateFile": "validateBspFile"
+    }
+  }
+}
+```
+Example `docker-compose.yml`
+```
+version: '3'
+services:
+  static-file-server:
+    image: fuk0/static-file-server # For local development use:build: .
+    ports:
+      - "80:8080"  # Host port 80 mapped to container port 8080
+    environment:
+      - CONFIG_PATH=/usr/src/app/config.json  # Path inside the container
+    volumes:
+      - ./files:/files
+      - ./config.json:/usr/src/app/config.json
+```
+
+Screenshots:
 ![image](https://github.com/user-attachments/assets/d338f2e4-63c6-4e3f-969c-fc9622d75eeb)
 
 ![image](https://github.com/user-attachments/assets/5d74d668-7e83-4e85-9ee9-58313ed5b272)
