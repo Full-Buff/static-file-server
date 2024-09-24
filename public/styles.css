@@ -1,7 +1,7 @@
 body {
     font-family: Arial, sans-serif;
     margin: 0;
-    padding: 0;
+    padding: 20px; /* Keep padding to move content away from edges */
     background-color: #121212; /* Dark background */
     color: #e0e0e0; /* Light text color */
 }
@@ -9,37 +9,52 @@ body {
 .top-bar {
     background: #1e1e1e; /* Darker background for the top bar */
     color: #fff;
-    padding: 10px;
+    padding: 10px 20px; /* Left and right padding */
     display: flex;
-    justify-content: space-between;
+    align-items: center;
+    justify-content: space-between; /* Distribute space between items */
+    min-height: 60px; /* Set a minimum height to keep consistent */
+}
+
+.logo-title {
+    display: flex;
     align-items: center;
 }
 
-.top-bar h1 {
-    margin: 0;
-    font-size: 24px;
-}
-
-.top-bar h1 a {
-    color: #81c784; /* Green accent */
+.logo-title a {
+    display: flex;
+    align-items: center;
     text-decoration: none;
+    color: #81c784; /* Green accent */
 }
 
-.top-bar h1 a:hover {
-    text-decoration: underline;
+.logo {
+    height: 40px;
+    margin-right: 10px;
 }
 
-.top-bar button {
+.logo-title span {
+    font-size: 24px;
+    color: #81c784; /* Green accent */
+}
+
+#uploadBtn {
     background: #81c784; /* Green accent */
     color: #1e1e1e;
-    padding: 5px 10px;
+    padding: 10px 15px; /* Original size */
     border: none;
     cursor: pointer;
     border-radius: 4px;
+    font-size: 25px;
 }
 
-.top-bar button:hover {
+#uploadBtn:hover {
     background: #66bb6a; /* Slightly darker green on hover */
+}
+
+.upload-placeholder {
+    width: 80px; /* Approximate width of the upload button */
+    height: 38px; /* Approximate height of the upload button */
 }
 
 .container {
@@ -141,4 +156,24 @@ input[type="submit"]:hover {
     color: #ff6b6b;
     margin-bottom: 10px;
     font-weight: bold;
+}
+
+/* Footer Styling */
+.footer {
+    position: fixed;
+    bottom: 0;
+    left : -20px;
+    width: 100%;
+    background-color: #1e1e1e; /* Dark background for footer */
+    color: #e0e0e0;
+    text-align: center;
+    padding: 10px;
+}
+
+.footer p {
+    margin: 0;
+}
+
+.footer a {
+    color: #81c784; /* Green accent */
 }

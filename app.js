@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const fsPromises = fs.promises;
 const rateLimit = require('express-rate-limit');
 
 const app = express();
@@ -80,6 +81,15 @@ app.set('view engine', 'ejs');
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 
+// Middleware to block access to the 'temp' directory
+app.use((req, res, next) => {
+    if (req.path.startsWith('/temp')) {
+        console.log(`Blocked access to temp directory: ${req.path}`);
+        return res.status(404).end();
+    }
+    next();
+});
+
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(FILES_DIR, { index: false }));
@@ -98,26 +108,32 @@ function isUploadAllowed(dir) {
     return allowed;
 }
 
-// Set up Multer storage
+// Set up Multer storage with temporary directory inside FILES_DIR
+const tempDirBase = path.join(FILES_DIR, 'temp');
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         const uploadPath = normalizePath(req.body.path || '/');
-        const saveDir = path.join(FILES_DIR, uploadPath);
-        cb(null, saveDir);
+        const tempDir = path.join(tempDirBase, uploadPath);
+        console.log(`Saving file to temporary directory: ${tempDir}`);
+
+        // Create the temp directory if it doesn't exist
+        fs.mkdir(tempDir, { recursive: true }, (err) => {
+            if (err) {
+                console.error(`Failed to create temp directory: ${tempDir}`, err);
+                return cb(err);
+            }
+            cb(null, tempDir);
+        });
     },
     filename: function (req, file, cb) {
         cb(null, file.originalname);
     }
 });
 
-// Multer upload instance
 const upload = multer({
     storage: storage,
-    limits: { fileSize: parseSize('200MB') }, // Global max file size
-    fileFilter: function (req, file, cb) {
-        // Allow all files; we'll perform validation later
-        cb(null, true);
-    }
+    limits: { fileSize: parseSize('100MB') }, // Global max file size
 });
 
 // Implement Rate Limiting
@@ -129,14 +145,13 @@ const uploadLimiter = rateLimit({
 
 // Upload route using Multer and rate limiter
 app.post('/upload', uploadLimiter, upload.single('file'), async (req, res) => {
-
-    console.log(`FILES_DIR: ${FILES_DIR}`);
-
+    let tempPath = '';
     try {
         if (!UPLOAD_ENABLED) {
             console.log('Uploads are disabled');
             return res.status(403).json({ error: 'Uploads are disabled' });
         }
+
         const uploadPath = normalizePath(req.body.path || '/');
         console.log(`Received upload request for path: '${uploadPath}'`);
 
@@ -155,27 +170,29 @@ app.post('/upload', uploadLimiter, upload.single('file'), async (req, res) => {
         }
 
         const uploadedFile = req.file;
-        console.log(`Uploaded file: '${uploadedFile.originalname}', size: ${uploadedFile.size} bytes`);
+        tempPath = uploadedFile.path; // Temporary file path
+        const originalName = uploadedFile.originalname;
+        const fileSize = uploadedFile.size;
 
-        const filePath = uploadedFile.path;
+        console.log(`Uploaded file: '${originalName}', size: ${fileSize} bytes`);
 
         // Check file size limit
-        if (rules.maxFileSizeBytes && uploadedFile.size > rules.maxFileSizeBytes) {
-            console.log(`File size ${uploadedFile.size} exceeds limit of ${rules.maxFileSizeBytes}`);
-            // Delete the file since it exceeds the size limit
-            fs.unlink(filePath, () => {});
+        if (rules.maxFileSizeBytes && fileSize > rules.maxFileSizeBytes) {
+            console.log(`File size ${fileSize} exceeds limit of ${rules.maxFileSizeBytes}`);
+            // Delete the temporary file
+            fs.unlink(tempPath, () => {});
             return res.status(400).json({ error: `File size exceeds the limit of ${rules.maxFileSize}` });
         }
 
         // Check file extension
-        const fileExtension = path.extname(uploadedFile.originalname).toLowerCase();
+        const fileExtension = path.extname(originalName).toLowerCase();
         const allowedExtensions = rules.allowedExtensions || ['*'];
         console.log(`File extension: '${fileExtension}', allowed extensions: ${JSON.stringify(allowedExtensions)}`);
 
         if (!allowedExtensions.includes('*') && !allowedExtensions.includes(fileExtension)) {
             console.log(`File extension '${fileExtension}' is not allowed`);
-            // Delete the file since it's not allowed
-            fs.unlink(filePath, () => {});
+            // Delete the temporary file
+            fs.unlink(tempPath, () => {});
             return res.status(400).json({ error: `File type ${fileExtension} is not allowed in this directory.` });
         }
 
@@ -185,44 +202,64 @@ app.post('/upload', uploadLimiter, upload.single('file'), async (req, res) => {
             if (validateFunc) {
                 try {
                     console.log(`Running validation function: '${rules.validateFile}'`);
-                    // Pass the file path to the validation function
-                    await validateFunc(filePath);
+                    await validateFunc(tempPath);
                     console.log('File passed validation');
                 } catch (err) {
                     console.log(`File validation failed: ${err.message}`);
-                    // Delete the file since validation failed
-                    fs.unlink(filePath, () => {});
+                    // Delete the temporary file
+                    fs.unlink(tempPath, () => {});
                     return res.status(400).json({ error: `File validation failed: ${err.message}` });
                 }
             } else {
                 console.log(`Validation function '${rules.validateFile}' not found`);
-                // Delete the file
-                fs.unlink(filePath, () => {});
+                // Delete the temporary file
+                fs.unlink(tempPath, () => {});
                 return res.status(500).json({ error: `Validation function ${rules.validateFile} not found.` });
             }
         }
 
-        // Check if file already exists (after upload to temp location)
-        const finalPath = path.join(FILES_DIR, uploadPath, uploadedFile.originalname);
+        // Final destination path
+        const finalDir = path.join(FILES_DIR, uploadPath);
+        const finalPath = path.join(finalDir, originalName);
+
+        // Check if file already exists
         if (fs.existsSync(finalPath)) {
-            console.log(`File '${uploadedFile.originalname}' already exists at '${finalPath}'`);
-            // Delete the uploaded file
-            fs.unlink(filePath, () => {});
-            return res.status(400).json({ error: `File '${uploadedFile.originalname}' already exists.` });
+            console.log(`File '${originalName}' already exists at '${finalPath}'`);
+            // Delete the temporary file
+            fs.unlink(tempPath, () => {});
+            return res.status(400).json({ error: `File '${originalName}' already exists.` });
         }
 
-        // File has passed all checks and is already saved in the correct location
-        console.log('File uploaded successfully');
-        res.json({ success: true });
-        
+        // Ensure the final directory exists
+        try {
+            await fsPromises.mkdir(finalDir, { recursive: true });
+        } catch (err) {
+            console.error(`Failed to create directory: ${finalDir}`, err);
+            // Delete the temporary file
+            fs.unlink(tempPath, () => {});
+            return res.status(500).json({ error: 'Error creating destination directory.' });
+        }
+
+        // Move the file from temp path to final destination
+        try {
+            await fsPromises.rename(tempPath, finalPath);
+            console.log('File uploaded and moved successfully');
+            res.json({ success: true });
+        } catch (err) {
+            console.error(`Error moving file: ${err}`);
+            // Delete the temporary file
+            fs.unlink(tempPath, () => {});
+            return res.status(500).json({ error: 'Error saving file.' });
+        }
+
     } catch (err) {
         console.error('Unexpected error during file upload:', err);
+        // Delete the temporary file
+        if (tempPath) {
+            fs.unlink(tempPath, () => {});
+        }
         res.status(500).json({ error: 'An unexpected error occurred during file upload.' });
     }
-
-    console.log(`Temp file path (before saving): ${filePath}`);
-    console.log(`Final path for file existence check: ${finalPath}`);
-
 });
 
 // Validate .bsp files
@@ -289,6 +326,10 @@ app.get('/*', (req, res, next) => {
                     res.status(500).send('Server Error');
                     return;
                 }
+
+                // Exclude 'temp' directory from listings
+                files = files.filter(file => file !== 'temp');
+
                 files = files.map(file => {
                     const fullPath = path.join(requestedPath, file);
                     const isDirectory = fs.statSync(fullPath).isDirectory();

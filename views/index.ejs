@@ -5,14 +5,23 @@
     <link rel="stylesheet" type="text/css" href="/styles.css">
 </head>
 <body>
+    <!-- Top Bar with Logo, Title, and Upload Button -->
     <div class="top-bar">
-        <h1><a href="/">FullBuff FastDL</a></h1>
+        <div class="logo-title">
+            <a href="/">
+                <img src="/logo.png" alt="Logo" class="logo">
+                <span>FullBuff FastDL</span>
+            </a>
+        </div>
         <% if (uploadAllowed) { %>
             <button id="uploadBtn">Upload</button>
+        <% } else { %>
+            <!-- Placeholder to maintain spacing -->
+            <div class="upload-placeholder"></div>
         <% } %>
     </div>
-    <div class="container">
 
+    <div class="container">
         <!-- Breadcrumb Trail -->
         <div class="breadcrumb">
             <% let pathParts = currentPath.split('/').filter(part => part); %>
@@ -24,6 +33,7 @@
             <% }) %>
         </div>
 
+        <!-- Directory Listing -->
         <ul>
             <% files.forEach(function(file) { %>
                 <li>
@@ -50,6 +60,11 @@
         </div>
     </div>
     <% } %>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Check out the <a href="https://github.com/Full-Buff/static-file-server" target="_blank">GitHub</a> for this project!</p>
+    </div>
 
     <script src="/script.js"></script>
 </body>
