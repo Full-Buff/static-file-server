@@ -135,3 +135,10 @@ input[type="submit"] {
 input[type="submit"]:hover {
     background-color: #66bb6a; /* Slightly darker green on hover */
 }
+
+/* Error Message Styling */
+.error-message {
+    color: #ff6b6b;
+    margin-bottom: 10px;
+    font-weight: bold;
+}

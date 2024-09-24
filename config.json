@@ -1,0 +1,23 @@
+{
+  "filesDir": "/files",
+  "uploadEnabled": true,
+  "uploadRules": {
+    "/tf/maps": {
+      "allowedExtensions": [".bsp"],
+      "maxFileSize": "125MB",
+      "validateFile": "validateBspFile"
+    },
+    "/cs": {
+      "allowedExtensions": ["*"],
+      "maxFileSize": "500MB"
+    },
+    "/gmod": {
+      "allowedExtensions": ["*"],
+      "maxFileSize": "500MB"
+    },
+    "/test": {
+      "allowedExtensions": ["*"],
+      "maxFileSize": "500MB"
+    }
+  }
+}
