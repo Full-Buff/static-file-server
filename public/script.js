@@ -84,3 +84,43 @@ if (uploadForm) {
         });
     });
 }
+
+// Copy Link Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    var copyButtons = document.querySelectorAll('.copy-link-btn');
+
+    copyButtons.forEach(function(btn) {
+        var fileLink = btn.nextElementSibling; // Assuming the link is the next sibling
+
+        // Copy URL on click
+        btn.addEventListener('click', function(event) {
+            event.preventDefault();
+            var url = window.location.origin + btn.getAttribute('data-href');
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(url).then(function() {
+                // Show a temporary message next to the button
+                var copiedMessage = document.createElement('span');
+                copiedMessage.textContent = 'Copied!';
+                copiedMessage.className = 'copied-message';
+                btn.parentNode.insertBefore(copiedMessage, btn.nextSibling);
+
+                // Remove the message after 2 seconds
+                setTimeout(function() {
+                    copiedMessage.remove();
+                }, 2000);
+            }, function(err) {
+                console.error('Could not copy text: ', err);
+            });
+        });
+
+        // Highlight file/folder name on hover
+        btn.addEventListener('mouseover', function() {
+            fileLink.classList.add('highlight');
+        });
+
+        btn.addEventListener('mouseout', function() {
+            fileLink.classList.remove('highlight');
+        });
+    });
+});

@@ -37,7 +37,12 @@
         <ul>
             <% files.forEach(function(file) { %>
                 <li>
-                    <a href="<%= encodeURI(file.href) %>" <%= file.isDirectory ? '' : 'download' %>>
+                    <!-- Copy Link Icon -->
+                    <button class="copy-link-btn" data-href="<%= encodeURI(file.href) %>" title="Copy URL">
+                        📋
+                    </button>
+                    <!-- File/Folder Link -->
+                    <a href="<%= encodeURI(file.href) %>" <%= file.isDirectory ? '' : 'download' %> class="file-link">
                         <%= file.isDirectory ? '📁' : '📄' %> <%= file.name %><%= file.isDirectory ? '/' : '' %>
                     </a>
                 </li>

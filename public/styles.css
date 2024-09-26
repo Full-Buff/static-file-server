@@ -192,3 +192,54 @@ input[type="submit"]:hover {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+/* Style for the copy link button */
+.copy-link-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    margin-right: 10px;
+    color: #81c784;
+    padding: 0;
+}
+
+.copy-link-btn:hover {
+    color: #66bb6a; /* Slightly darker green on hover */
+}
+
+/* Style for the file/folder link when highlighted */
+.file-link.highlight {
+    text-decoration: underline;
+}
+
+/* Style for the copied message */
+.copied-message {
+    margin-left: 5px;
+    color: #81c784;
+    font-size: 14px;
+    animation: fadeOut 2s forwards;
+}
+
+@keyframes fadeOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* Adjust list item to align items */
+li {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+    font-size: 18px;
+}
+
+/* Adjust spacing of the file/folder icon and name */
+.file-link {
+    display: flex;
+    align-items: center;
+}
+
+.file-link span {
+    margin-left: 5px;
+}
