@@ -133,7 +133,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: parseSize('100MB') }, // Global max file size
+    limits: { fileSize: parseSize('150MB') }, // Global max file size
 });
 
 // Implement Rate Limiting

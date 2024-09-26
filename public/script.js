@@ -30,6 +30,8 @@ if (uploadForm) {
         var formData = new FormData(uploadForm);
         var fileInput = uploadForm.querySelector('input[type="file"]');
         var file = fileInput.files[0];
+        var submitButton = uploadForm.querySelector('input[type="submit"]');
+        var loadingIcon = document.getElementById('loadingIcon');
 
         // Client-side validation
         if (!file) {
@@ -37,8 +39,12 @@ if (uploadForm) {
             return;
         }
 
-        // Get the current path from the hidden input
-        var currentPath = uploadForm.querySelector('input[name="path"]').value;
+        // Disable the submit button and file input
+        submitButton.disabled = true;
+        fileInput.disabled = true;
+
+        // Show the loading icon
+        loadingIcon.style.display = 'block';
 
         // Proceed to upload
         fetch('/upload', {
@@ -46,6 +52,13 @@ if (uploadForm) {
             body: formData
         })
         .then(async function(response) {
+            // Re-enable the submit button and file input
+            submitButton.disabled = false;
+            fileInput.disabled = false;
+
+            // Hide the loading icon
+            loadingIcon.style.display = 'none';
+
             if (response.ok) {
                 // Success
                 modal.style.display = 'none';
@@ -59,6 +72,13 @@ if (uploadForm) {
             }
         })
         .catch(function(error) {
+            // Re-enable the submit button and file input
+            submitButton.disabled = false;
+            fileInput.disabled = false;
+
+            // Hide the loading icon
+            loadingIcon.style.display = 'none';
+
             console.error('Error:', error);
             errorMessage.innerText = 'An error occurred during upload.';
         });
