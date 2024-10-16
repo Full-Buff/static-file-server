@@ -1,7 +1,7 @@
 # static-file-server
 We are running ours at https://fastdl.fullbuff.gg/
 
-A simple static file server written in Node.js.
+A simple static file server written in Node.js. (hopefully moving to Deno soon :3)
 
 https://hub.docker.com/r/fuk0/static-file-server
 
