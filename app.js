@@ -145,6 +145,15 @@ const uploadLimiter = rateLimit({
 
 // Upload route using Multer and rate limiter
 app.post('/upload', uploadLimiter, upload.single('file'), async (req, res) => {
+
+
+            // Reviewing this section again, this is probably organized incorrectly.
+            // Like I should probably have it check for files of the same name first, etc.
+            // Just stuff to improve network performance, so it doesnt bother making the user
+            // wait forever, just to say the file cant be uploaded becauase of 'x' reason,
+            // which the server already knew from the beginning of the request.
+
+
     let tempPath = '';
     try {
         if (!UPLOAD_ENABLED) {
@@ -222,14 +231,6 @@ app.post('/upload', uploadLimiter, upload.single('file'), async (req, res) => {
         const finalDir = path.join(FILES_DIR, uploadPath);
         const finalPath = path.join(finalDir, originalName);
 
-        // Check if file already exists
-        if (fs.existsSync(finalPath)) {
-            console.log(`File '${originalName}' already exists at '${finalPath}'`);
-            // Delete the temporary file
-            fs.unlink(tempPath, () => {});
-            return res.status(400).json({ error: `File '${originalName}' already exists.` });
-        }
-
         // Ensure the final directory exists
         try {
             await fsPromises.mkdir(finalDir, { recursive: true });
@@ -238,6 +239,42 @@ app.post('/upload', uploadLimiter, upload.single('file'), async (req, res) => {
             // Delete the temporary file
             fs.unlink(tempPath, () => {});
             return res.status(500).json({ error: 'Error creating destination directory.' });
+        }
+
+        // This now just checks the base file name and not the extension, in case the already
+        // existing file on the server is a bz2. (in prep for auto compressing all maps to bz2)
+        // We will still only allow uploads of bsp's so that we can keep the validation function of them.
+
+        // We should abstract this further in the config.json as something like "archiveType:" so its
+        // easily modifiable and not hard coded.
+        // Will do later - Fuko
+
+        // Check if a file with the same base name (ignoring extension) already exists
+        // Function to get the base name, ignoring .bz2 extension if present
+        function getBaseName(filename) {
+            let baseName = filename.toLowerCase();
+            if (baseName.endsWith('.bz2')) {
+                baseName = baseName.slice(0, -4); // Remove '.bz2'
+            }
+            return baseName;
+        }
+
+        // Check for conflicts with existing files
+        try {
+            const filesInDir = await fsPromises.readdir(finalDir);
+            const uploadedBaseName = getBaseName(originalName);
+            const nameConflict = filesInDir.find(file => getBaseName(file) === uploadedBaseName);
+            if (nameConflict) {
+                console.log(`A file with the base name '${uploadedBaseName}' already exists as '${nameConflict}' in '${finalDir}'`);
+                // Delete the temporary file
+                fs.unlink(tempPath, () => {});
+                return res.status(400).json({ error: `A file named '${uploadedBaseName}' already exists as '${nameConflict}'` });
+            }
+        } catch (err) {
+            console.error(`Failed to read directory: ${finalDir}`, err);
+            // Delete the temporary file
+            fs.unlink(tempPath, () => {});
+            return res.status(500).json({ error: 'Error reading destination directory.' });
         }
 
         // Move the file from temp path to final destination
@@ -251,6 +288,7 @@ app.post('/upload', uploadLimiter, upload.single('file'), async (req, res) => {
             fs.unlink(tempPath, () => {});
             return res.status(500).json({ error: 'Error saving file.' });
         }
+
 
     } catch (err) {
         console.error('Unexpected error during file upload:', err);
